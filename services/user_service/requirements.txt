@@ -1,0 +1,4 @@
+FLASK
+bcrypt
+psycopg2-binary
+PyJWT

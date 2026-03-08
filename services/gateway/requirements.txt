@@ -1,0 +1,5 @@
+FLASK
+requests
+PyJWT
+redis
+flask-cors

@@ -1,0 +1,170 @@
+services:
+  ollama:
+    image: ollama/ollama
+    ports: [ '11434:11434' ]
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: >
+      "ollama serve & sleep 5 && ollama pull nomic-embed-text && ollama pull llama3.2 && wait"
+  db:
+    image: pgvector/pgvector:pg16
+    ports: [ '5432:5432' ]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: docint
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d docint" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user_service:
+    build: ./services/user_service
+    ports: [ '8001:8001' ]
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/docint
+      JWT_SECRET: ilovebubu
+    depends_on:
+      db:
+        condition: service_healthy
+
+  gateway:
+    build: ./services/gateway
+    ports: [ '8000:8000' ]
+    environment:
+      JWT_SECRET: ilovebubu
+      REDIS_URL: redis://redis:6379
+
+  redis:
+    image: redis:7-alpine
+    ports: [ '6380:6379' ]
+    volumes:
+      - redis_data:/data
+
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - "9000:9000" #api
+      - "9001:9001" #console
+    environment:
+      MINIO_SERVER_URL: http://localhost:9000
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio@1234
+      MINIO_DEFAULT_BUCKETS: "mybucket"
+      MINIO_DOMAIN: localhost
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  upload_service:
+    build: ./services/upload_service
+    ports: [ "8002:8002" ]
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/docint
+      MINIO_URL: minio:9000
+      MINIO_EXTERNAL_URL: localhost:9000
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio@1234
+      MINIO_DEFAULT_BUCKETS: "mybucket"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0 # Use a specific version for stability
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      # Listeners: 9092 for the App, 9093 for the Controller
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      # Required for KRaft
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  outbox_poller:
+    build: ./services/outbox_poller
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/docint
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  ingestion_worker:
+    build: ./services/ingestion_service
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/docint
+      MINIO_URL: minio:9000
+      MINIO_EXTERNAL_URL: localhost:9000
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio@1234
+      KAFKA_BOOTSTRAP: kafka:9092
+      GROUP_ID: "ingestion"
+      MINIO_DEFAULT_BUCKETS: "mybucket"
+      OLLAMA_URL: "http://ollama:11434"
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  query_service:
+    build: ./services/query_service
+    ports: [ "8003:8003" ]
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/docint
+      REDIS_URL: redis://redis:6379
+      OLLAMA_URL: "http://ollama:11434"
+
+  admin_service:
+    build: ./services/admin_service
+    ports: [ "8004:8004" ]
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/docint
+      KAFKA_BOOTSTRAP: kafka:9092
+
+  ui:
+    build: ./ui
+    ports: [ "3000:80" ]
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - minio
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
+  ollama_data:

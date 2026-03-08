@@ -1,0 +1,55 @@
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzcyOTU2ODU4fQ.C08VgrYDguzlH5QwjwiAnM9y1qii-nvyYpiW8_ngRc8"
+}
+
+{
+  "id": 1,
+  "presigned_expiry": "Sat, 07 Mar 2026 10:01:43 GMT",
+  "presigned_url": "http://minio:9000/mybucket/users/1/e5f5be9a-22c3-4044-947d-2554548a7b10/sample.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minio%2F20260307%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260307T080143Z&X-Amz-Expires=7200&X-Amz-SignedHeaders=host&X-Amz-Signature=6634d9c2d1ae22c97d9b4774dbf25c76aa9c05129df81cff2c6f2c646431929c"
+}
+
+curl  -X PUT \
+  'http://minio:9000/mybucket/users/1/e5f5be9a-22c3-4044-947d-2554548a7b10/sample.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minio%2F20260307%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260307T080143Z&X-Amz-Expires=7200&X-Amz-SignedHeaders=host&X-Amz-Signature=6634d9c2d1ae22c97d9b4774dbf25c76aa9c05129df81cff2c6f2c646431929c' \
+  --header 'Accept: */*' \
+  --header 'User-Agent: Thunder Client (https://www.thunderclient.com)' \
+  --header 'Content-Type: application/octet-stream' \
+  --data-binary '@sample.pdf'
+
+
+
+curl -X POST http://gateway:8000/api/query/conversations/1/query \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzcyOTczOTY0fQ.zvtFWYsISSF9pLIoom6O5bkKPpJwFMjiDrfmh0qVssg' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: text/event-stream' \
+  -d '{"question": "Prime minister of india"?"}' \
+  --no-buffer
+
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzcyOTczOTY0fQ.zvtFWYsISSF9pLIoom6O5bkKPpJwFMjiDrfmh0qVssg"
+}
+
+
+
+{
+  "id": 1,
+  "presigned_expiry": "Sat, 07 Mar 2026 18:28:35 GMT",
+  "presigned_url": "http://minio:9000/mybucket/users/1/e6a86f52-08cc-4d21-a558-0684b0ee2338/sample.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minio%2F20260307%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260307T162835Z&X-Amz-Expires=7200&X-Amz-SignedHeaders=host&X-Amz-Signature=cb9f41c9fb36d040aa849319e7a7a3260f72c0dce24d941ffac201559c130017"
+}
+
+
+curl  -X PUT \
+  'http://minio:9000/mybucket/users/1/e6a86f52-08cc-4d21-a558-0684b0ee2338/sample.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minio%2F20260307%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260307T162835Z&X-Amz-Expires=7200&X-Amz-SignedHeaders=host&X-Amz-Signature=cb9f41c9fb36d040aa849319e7a7a3260f72c0dce24d941ffac201559c130017' \
+  --header 'Accept: */*' \
+  --header 'User-Agent: Thunder Client (https://www.thunderclient.com)' \
+  --header 'Content-Type: applcation/pdf' \
+  --header 'Content-Type: application/octet-stream' \
+  --data-binary '@sample.pdf'
+
+
+  
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzcyOTg3MjkzfQ.t9alE9Q6eGfU4JjmGFbvoZoWPWVGt4vRUwuka1xtx6k
+
+
+curl -X POST http://gateway:8000/api/query/conversations/1/query   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzcyOTg3MjkzfQ.t9alE9Q6eGfU4JjmGFbvoZoWPWVGt4vRUwuka1xtx6k
+'   -H 'Content-Type: application/json'   -H 'Accept: text/event-stream'   -d '{"question": "what is this book about?"}'   --no-buffer

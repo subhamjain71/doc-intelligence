@@ -1,0 +1,3 @@
+FLASK
+psycopg2-binary
+minio
